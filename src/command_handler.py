@@ -4,10 +4,12 @@ import argparse
 
 import argparse  # 导入argparse库，用于处理命令行参数解析
 
+
 class CommandHandler:
-    def __init__(self, github_client, subscription_manager, report_generator):
+    def __init__(self, github_client, hacker_news_client, subscription_manager, report_generator):
         # 初始化CommandHandler，接收GitHub客户端、订阅管理器和报告生成器
         self.github_client = github_client
+        self.hacker_news_client = hacker_news_client
         self.subscription_manager = subscription_manager
         self.report_generator = report_generator
         self.parser = self.create_parser()  # 创建命令行解析器
@@ -22,32 +24,60 @@ class CommandHandler:
 
         # 添加订阅命令
         parser_add = subparsers.add_parser('add', help='Add a subscription')
-        parser_add.add_argument('repo', type=str, help='The repository to subscribe to (e.g., owner/repo)')
+        parser_add.add_argument(
+            'repo', type=str, help='The repository to subscribe to (e.g., owner/repo)')
         parser_add.set_defaults(func=self.add_subscription)
 
         # 删除订阅命令
-        parser_remove = subparsers.add_parser('remove', help='Remove a subscription')
-        parser_remove.add_argument('repo', type=str, help='The repository to unsubscribe from (e.g., owner/repo)')
+        parser_remove = subparsers.add_parser(
+            'remove', help='Remove a subscription')
+        parser_remove.add_argument(
+            'repo', type=str, help='The repository to unsubscribe from (e.g., owner/repo)')
         parser_remove.set_defaults(func=self.remove_subscription)
 
         # 列出所有订阅命令
-        parser_list = subparsers.add_parser('list', help='List all subscriptions')
+        parser_list = subparsers.add_parser(
+            'list', help='List all subscriptions')
         parser_list.set_defaults(func=self.list_subscriptions)
 
         # 导出每日进展命令
-        parser_export = subparsers.add_parser('export', help='Export daily progress')
-        parser_export.add_argument('repo', type=str, help='The repository to export progress from (e.g., owner/repo)')
+        parser_export = subparsers.add_parser(
+            'export', help='Export daily progress')
+        parser_export.add_argument(
+            'repo', type=str, help='The repository to export progress from (e.g., owner/repo)')
         parser_export.set_defaults(func=self.export_daily_progress)
 
         # 导出特定日期范围进展命令
-        parser_export_range = subparsers.add_parser('export-range', help='Export progress over a range of dates')
-        parser_export_range.add_argument('repo', type=str, help='The repository to export progress from (e.g., owner/repo)')
-        parser_export_range.add_argument('days', type=int, help='The number of days to export progress for')
-        parser_export_range.set_defaults(func=self.export_progress_by_date_range)
+        parser_export_range = subparsers.add_parser(
+            'export-range', help='Export progress over a range of dates')
+        parser_export_range.add_argument(
+            'repo', type=str, help='The repository to export progress from (e.g., owner/repo)')
+        parser_export_range.add_argument(
+            'days', type=int, help='The number of days to export progress for')
+        parser_export_range.set_defaults(
+            func=self.export_progress_by_date_range)
+
+        # 导出每日进展命令
+        parser_hacker_export = subparsers.add_parser(
+            'export-hacker', help='Export hackernews daily progress')
+        parser_hacker_export.add_argument(
+            'days', type=int, help='The number of days to export progress for')
+        parser_hacker_export.set_defaults(
+            func=self.export_hackernews_daily_progress)
+
+        # 生成Hacker的日报命令
+        parser_hacker_generate = subparsers.add_parser(
+            'generate-hacker', help='Generate hackernews report from markdown file')
+        parser_hacker_generate.add_argument(
+            'file', type=str, help='The markdown file to generate report from')
+        parser_hacker_generate.set_defaults(
+            func=self.generate_hackernews_report)
 
         # 生成日报命令
-        parser_generate = subparsers.add_parser('generate', help='Generate daily report from markdown file')
-        parser_generate.add_argument('file', type=str, help='The markdown file to generate report from')
+        parser_generate = subparsers.add_parser(
+            'generate', help='Generate daily report from markdown file')
+        parser_generate.add_argument(
+            'file', type=str, help='The markdown file to generate report from')
         parser_generate.set_defaults(func=self.generate_daily_report)
 
         # 帮助命令
@@ -76,11 +106,21 @@ class CommandHandler:
         print(f"Exported daily progress for repository: {args.repo}")
 
     def export_progress_by_date_range(self, args):
-        self.github_client.export_progress_by_date_range(args.repo, days=args.days)
-        print(f"Exported progress for the last {args.days} days for repository: {args.repo}")
+        self.github_client.export_progress_by_date_range(
+            args.repo, days=args.days)
+        print(f"Exported progress for the last {
+              args.days} days for repository: {args.repo}")
 
     def generate_daily_report(self, args):
         self.report_generator.generate_daily_report(args.file)
+        print(f"Generated daily report from file: {args.file}")
+
+    def export_hackernews_daily_progress(self, args):
+        self.hacker_news_client.export_progress_by_date_range(args.days)
+        print(f"Exported daily progress for hackernews")
+
+    def generate_hackernews_report(self, args):
+        self.report_generator.generate_hackernews_report(args.file)
         print(f"Generated daily report from file: {args.file}")
 
     def print_help(self, args=None):
